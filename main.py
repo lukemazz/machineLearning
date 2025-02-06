@@ -148,16 +148,17 @@ def optimize_model():
         return
     transitions = random.sample(memory, BATCH_SIZE)
     batch = list(zip(*transitions))
-
-    state_batch = torch.tensor(batch[0], dtype=torch.float32)
+    
+    # Convert the list of numpy.ndarrays to a single numpy.ndarray
+    state_batch = torch.tensor(np.array(batch[0]), dtype=torch.float32)
     action_batch = torch.tensor(batch[1], dtype=torch.int64).unsqueeze(1)
     reward_batch = torch.tensor(batch[2], dtype=torch.float32)
-    next_state_batch = torch.tensor(batch[3], dtype=torch.float32)
-
+    next_state_batch = torch.tensor(np.array(batch[3]), dtype=torch.float32)
+    
     current_q_values = policy_net(state_batch).gather(1, action_batch)
     next_q_values = target_net(next_state_batch).max(1)[0].detach()
     expected_q_values = reward_batch + GAMMA * next_q_values
-
+    
     loss = nn.MSELoss()(current_q_values.squeeze(), expected_q_values)
     optimizer.zero_grad()
     loss.backward()
@@ -228,6 +229,38 @@ def run_episode():
     if total_deaths > 0:
         score_to_death_ratio = total_reward / total_deaths
         print(f"Score-to-Death Ratio: {score_to_death_ratio:.2f}")
+# Funzione per resettare il gioco
+def reset_game():
+    global player, enemies, bullets, all_sprites
+    # Resetta il giocatore
+    player.rect.center = (WIDTH // 2, HEIGHT - 50)
+    # Rimuovi tutti i nemici e i proiettili
+    enemies.empty()
+    bullets.empty()
+    all_sprites.empty()
+    all_sprites.add(player)
+    # Rigenera i nemici
+    for _ in range(8):
+        enemy = Enemy()
+        all_sprites.add(enemy)
+        enemies.add(enemy)
+
+# Ciclo principale per eseguire episodi continui
+running = True
+while running:
+    # Esegui un singolo episodio
+    run_episode()
+    
+    # Resetta il gioco per il prossimo episodio
+    reset_game()
+    
+    # Controlla gli eventi per uscire dal gioco
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
+            running = False
+
+# Esci da pygame
+pygame.quit()
 
 # Esegui un singolo episodio
 run_episode()
