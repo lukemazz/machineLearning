@@ -1,9 +1,9 @@
 How to Run
 Install the required dependencies:
-'''pip install pygame torch numpy'''
+```pip install pygame torch numpy```
 
 Run the script:
-'''python main.py'''
+```python main.py```
 
 
 Observe the AI agent playing the game in real-time. The console will display statistics after each episode.
